@@ -21,6 +21,7 @@
 #define PIN_DOWN   10
 #define PIN_LEFT   11
 #define PIN_RIGHT  13
+#define PIN_DEBUG   8
 
 static IRsend irsend;
 static int idle_count = 0;
@@ -49,13 +50,16 @@ void setup()
   pinMode(PIN_DOWN, INPUT);  digitalWrite(PIN_DOWN, HIGH);
   pinMode(PIN_LEFT, INPUT);  digitalWrite(PIN_LEFT, HIGH);
   pinMode(PIN_RIGHT, INPUT); digitalWrite(PIN_RIGHT, HIGH);
+
+  pinMode(PIN_DEBUG, OUTPUT);
+  digitalWrite(PIN_DEBUG, LOW);
 }
 
 void goto_sleep(void)
 {
   set_sleep_mode (SLEEP_MODE_PWR_DOWN);  
   sleep_enable();  
-  EIFR  |= _BV(PCIF);  // Clear any Pin Change Interrupt flag
+  EIFR  |= _BV(PCIF); // Clear any Pin Change Interrupt flag
   GIMSK |= _BV(PCIE); // Enable Pin Change Interrupt
   sleep_cpu();
   
@@ -81,7 +85,7 @@ void send_cmd(unsigned int cmd)
     }
   }
   irsend.mark(750);
-  irsend.space(0);
+  irsend.space(1050);
 }
 
 void loop() {
@@ -92,19 +96,46 @@ void loop() {
   
   if (up || down || left || right)
   {
-    send_cmd(cmd_forward);
+    idle_count = 0;
+    digitalWrite(PIN_DEBUG, HIGH);
+    if (up) {
+      if (left) {
+        send_cmd(cmd_forward_left);
+      } else if (right) {
+        send_cmd(cmd_forward_right);
+      } else {
+        send_cmd(cmd_forward);
+      }
+    } else if (down) {
+      if (left) {
+        send_cmd(cmd_back_left);
+      } else if (right) {
+        send_cmd(cmd_back_right);
+      } else {
+        send_cmd(cmd_back);
+      }
+    } else if (left) {
+      send_cmd(cmd_left);      
+    } else if (right) {
+      send_cmd(cmd_right);
+    }
   }
   else
   {
-    send_cmd(cmd_stop);
-    idle_count++;
+    digitalWrite(PIN_DEBUG, LOW);
+    if (idle_count < 10)
+    {
+      send_cmd(cmd_stop);
+      idle_count++;
+    }
   }
+
   
   if (idle_count > 10)
   {
     goto_sleep();
     idle_count = 0;
   }
-  
-  delay(100);
+
+  delay(10);
 }
