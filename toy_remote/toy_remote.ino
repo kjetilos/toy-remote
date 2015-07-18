@@ -28,7 +28,15 @@ static int idle_count = 0;
 /**
  * IR Commands
  */
-static const unsigned int cmd_forward = 0b0101110000011;
+static const unsigned int cmd_forward       = 0b0101110000011;
+static const unsigned int cmd_forward_left  = 0b0101110100001;
+static const unsigned int cmd_forward_right = 0b0101111000010;
+static const unsigned int cmd_back          = 0b0100010000000;
+static const unsigned int cmd_back_left     = 0b0100010100010;
+static const unsigned int cmd_back_right    = 0b0100011000001;
+static const unsigned int cmd_left          = 0b0100110100011;
+static const unsigned int cmd_right         = 0b0100111000000;
+static const unsigned int cmd_stop          = 0b0100110000001;
 
 void setup()
 {
@@ -88,6 +96,7 @@ void loop() {
   }
   else
   {
+    send_cmd(cmd_stop);
     idle_count++;
   }
   
@@ -97,5 +106,5 @@ void loop() {
     idle_count = 0;
   }
   
-  delay(100);  
+  delay(100);
 }
