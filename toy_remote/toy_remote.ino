@@ -17,13 +17,18 @@
 #include <IRremote.h>
 #include <avr/sleep.h>
 
-static IRsend irsend;
-static int idle_count = 0;
-
 #define PIN_UP      9
 #define PIN_DOWN   10
 #define PIN_LEFT   11
 #define PIN_RIGHT  13
+
+static IRsend irsend;
+static int idle_count = 0;
+
+/**
+ * IR Commands
+ */
+static const unsigned int cmd_forward = 0b0101110000011;
 
 void setup()
 {
@@ -51,6 +56,26 @@ void goto_sleep(void)
   GIMSK = 0; // Disable Pin Change Interrupt
 }
 
+void send_cmd(unsigned int cmd)
+{
+  irsend.enableIROut(38);
+  for (int i = 12; i >= 0; i--) {
+    if (i == 12) {
+      irsend.mark(1850);
+    } else {
+      irsend.mark(750);
+    }
+    
+    if (cmd & (0x1 << i)) {
+      irsend.space(1050);
+    } else {
+      irsend.space(350);
+    }
+  }
+  irsend.mark(750);
+  irsend.space(0);
+}
+
 void loop() {
   bool up = digitalRead(PIN_UP) == LOW;
   bool down = digitalRead(PIN_DOWN) == LOW;
@@ -59,7 +84,7 @@ void loop() {
   
   if (up || down || left || right)
   {
-    
+    send_cmd(cmd_forward);
   }
   else
   {
@@ -72,11 +97,5 @@ void loop() {
     idle_count = 0;
   }
   
-  irsend.enableIROut(38);
-  for (int i = 0; i < 1000; i++) {
-    irsend.mark(1850);
-    irsend.space(750);
-  }
-
   delay(100);  
 }
