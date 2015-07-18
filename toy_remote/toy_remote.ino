@@ -17,9 +17,14 @@
 #include <IRremote.h>
 #include <avr/sleep.h>
 
-IRsend irsend;
+static IRsend irsend;
+static int idle_count = 0;
 
-#define IR_PIN   8
+#define PIN_UP      9
+#define PIN_DOWN   10
+#define PIN_LEFT   11
+#define PIN_RIGHT  13
+
 void setup()
 {
   PCMSK |= _BV(PCINT0)   // Pin 9
@@ -27,22 +32,17 @@ void setup()
          | _BV(PCINT2)   // Pin 11
          | _BV(PCINT4);  // Pin 13
 
-  pinMode( 9, INPUT); digitalWrite( 9, HIGH);
-  pinMode(10, INPUT); digitalWrite(10, HIGH);
-  pinMode(11, INPUT); digitalWrite(11, HIGH);
-  pinMode(13, INPUT); digitalWrite(13, HIGH);
-
-  
-  pinMode(IR_PIN, OUTPUT);
-  digitalWrite(IR_PIN, LOW);
+  pinMode(PIN_UP, INPUT);    digitalWrite(PIN_UP, HIGH);
+  pinMode(PIN_DOWN, INPUT);  digitalWrite(PIN_DOWN, HIGH);
+  pinMode(PIN_LEFT, INPUT);  digitalWrite(PIN_LEFT, HIGH);
+  pinMode(PIN_RIGHT, INPUT); digitalWrite(PIN_RIGHT, HIGH);
 }
-
 
 void goto_sleep(void)
 {
   set_sleep_mode (SLEEP_MODE_PWR_DOWN);  
   sleep_enable();  
-  EIFR |= _BV(PCIF);  // Clear any Pin Change Interrupt flag
+  EIFR  |= _BV(PCIF);  // Clear any Pin Change Interrupt flag
   GIMSK |= _BV(PCIE); // Enable Pin Change Interrupt
   sleep_cpu();
   
@@ -52,17 +52,31 @@ void goto_sleep(void)
 }
 
 void loop() {
-  digitalWrite(IR_PIN, HIGH);
-  delay(500);
-  digitalWrite(IR_PIN, LOW);
-  delay(500);
-
+  bool up = digitalRead(PIN_UP) == LOW;
+  bool down = digitalRead(PIN_DOWN) == LOW;
+  bool left = digitalRead(PIN_LEFT) == LOW;
+  bool right = digitalRead(PIN_RIGHT) == LOW;
+  
+  if (up || down || left || right)
+  {
+    
+  }
+  else
+  {
+    idle_count++;
+  }
+  
+  if (idle_count > 10)
+  {
+    goto_sleep();
+    idle_count = 0;
+  }
   
   irsend.enableIROut(38);
   for (int i = 0; i < 1000; i++) {
     irsend.mark(1850);
     irsend.space(750);
   }
-  
-  goto_sleep();
+
+  delay(100);  
 }
