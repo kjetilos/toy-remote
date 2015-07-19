@@ -53,6 +53,11 @@ void setup()
 
   pinMode(PIN_DEBUG, OUTPUT);
   digitalWrite(PIN_DEBUG, LOW);
+  
+  /* Note that we must use an external crystal oscillator for this function 
+   * to work propperly. When using the internal RC oscillator this function
+   * setup an output of ~37 kHz */
+  irsend.enableIROut(38);  
 }
 
 void goto_sleep(void)
@@ -70,25 +75,24 @@ void goto_sleep(void)
 
 void send_cmd(unsigned int cmd)
 {
-  irsend.enableIROut(38);
   for (int i = 12; i >= 0; i--) {
     if (i == 12) {
-      irsend.mark(1850);
+      irsend.mark(1930);
     } else {
-      irsend.mark(750);
+      irsend.mark(800);
     }
     
     if (cmd & (0x1 << i)) {
-      irsend.space(1050);
+      irsend.space(991);
     } else {
-      irsend.space(350);
+      irsend.space(300);
     }
   }
-  irsend.mark(750);
+  irsend.mark(800);
   irsend.space(1050);
 }
 
-void loop() {
+void loop() {  
   bool up = digitalRead(PIN_UP) == LOW;
   bool down = digitalRead(PIN_DOWN) == LOW;
   bool left = digitalRead(PIN_LEFT) == LOW;
@@ -137,5 +141,6 @@ void loop() {
     idle_count = 0;
   }
 
-  delay(10);
+  // TODO: Figure out what is wrong with the delay function on ATtiny 2313
+  delay(2000); // Should be delay(130) instead since we want to wait 130 ms however something is wrong...
 }
