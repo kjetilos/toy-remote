@@ -2,11 +2,13 @@
  * Toy Remote code customized for running on an ATtiny 2313
  *
  * Pin Usage:
+ *   8 (PD6) - Debug 
  *   9 (PB0) - Up
  *  10 (PB1) - Down
  *  11 (PB2) - Left
  *  12 (PB3) - IR LED Output
  *  13 (PB4) - Right
+ *  
  *
  * The input buttons are using internal pull-up and are connected to ground so 
  * they are active low.
@@ -92,7 +94,7 @@ void send_cmd(unsigned int cmd)
   irsend.space(1050);
 }
 
-void loop() {  
+void loop() {
   bool up = digitalRead(PIN_UP) == LOW;
   bool down = digitalRead(PIN_DOWN) == LOW;
   bool left = digitalRead(PIN_LEFT) == LOW;
@@ -135,7 +137,7 @@ void loop() {
   }
 
   
-  if (idle_count > 10)
+  if (idle_count >= 10)
   {
     goto_sleep();
     idle_count = 0;
